@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
@@ -19,21 +18,18 @@ if not os.path.exists(MODEL_PATH):
 model = tf.keras.models.load_model(MODEL_PATH)
 
 # Define class labels (Update with actual dataset labels)
-
 CLASS_LABELS = [
     "1", "2", "3", "4", "5", "6", "7", "8", "9",
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
     "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
 ]
 
-
-
 # Function to preprocess image
 def preprocess_image(image):
     image = image.convert("RGB")  # Convert to RGB
-    image = image.resize((64, 64))  # Resize to match model input
-    image = np.array(image) / 255.0  # Normalize
-    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    image = image.resize((224, 224))  # Resize to match model input
+    image = np.array(image) / 255.0  # Normalize pixel values
+    image = image.reshape(1, -1)  # Flatten image to (1, 25088)
     return image
 
 # Prediction route
@@ -49,7 +45,9 @@ def predict():
 
         prediction = model.predict(processed_image)
         predicted_class = np.argmax(prediction)
-        predicted_label = CLASS_LABELS.get(predicted_class, "Unknown")
+
+        # Fix: Use list indexing instead of `.get()`
+        predicted_label = CLASS_LABELS[predicted_class] if predicted_class < len(CLASS_LABELS) else "Unknown"
 
         return jsonify({"prediction": predicted_label})
 
