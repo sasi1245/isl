@@ -26,11 +26,12 @@ CLASS_LABELS = [
 
 # Function to preprocess image
 def preprocess_image(image):
-    image = image.convert("RGB")  # Convert to RGB
+    image = image.convert("RGB")  # Ensure RGB format
     image = image.resize((224, 224))  # Resize to match model input
     image = np.array(image) / 255.0  # Normalize pixel values
-    image = image.reshape(1, -1)  # Flatten image to (1, 25088)
+    image = np.expand_dims(image, axis=0)  # Add batch dimension (1, 224, 224, 3)
     return image
+
 
 # Prediction route
 @app.route("/predict", methods=["POST"])
