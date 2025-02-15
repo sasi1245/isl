@@ -5,6 +5,9 @@ import numpy as np
 from PIL import Image
 import io
 import os
+from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
+from tensorflow.keras.models import Model
+
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -24,13 +27,25 @@ CLASS_LABELS = [
     "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
 ]
 
-# Function to preprocess image
+# Load VGG16 for feature extraction (Remove classification layer)
+base_model = VGG16(weights="imagenet", include_top=False)
+feature_extractor = Model(inputs=base_model.input, outputs=base_model.output)
+
 def preprocess_image(image):
     image = image.convert("RGB")  # Ensure RGB format
     image = image.resize((224, 224))  # Resize to match model input
-    image = np.array(image) / 255.0  # Normalize pixel values
-    image = np.expand_dims(image, axis=0)  # Add batch dimension (1, 224, 224, 3)
-    return image
+    image = np.array(image)  # Convert to NumPy array
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    image = preprocess_input(image)  # Apply VGG16 preprocessing
+
+    # Extract VGG16 features (output shape: (1, 7, 7, 512))
+    features = feature_extractor.predict(image)
+
+    # Flatten to match expected input shape (1, 25088)
+    features = features.flatten()
+    features = np.expand_dims(features, axis=0)  # Ensure correct shape
+
+    return features
 
 
 # Prediction route
